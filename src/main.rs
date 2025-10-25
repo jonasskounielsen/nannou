@@ -1,17 +1,9 @@
-use nannou::prelude::*;
+mod ball;
+mod system;
+mod nannou;
+mod collision;
+mod vec2;
 
 fn main() {
-    nannou::sketch(view).run()
-}
-
-fn view(app: &App, frame: Frame) {
-    let draw = app.draw();
-
-    draw.background().color(CORNFLOWERBLUE);
-
-    let win = app.window_rect();
-
-    
-
-    draw.to_frame(app, &frame).unwrap();
+    nannou::run();
 }
