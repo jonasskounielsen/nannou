@@ -127,17 +127,15 @@ impl System {
 
     fn get_wall_collision<'a>(&self, ball: &'a Ball, wall: Wall) -> Option<Collision<'a>> {
         let distance = match wall {
-            Wall::Top    => ball.pos().y + self.size.0 / 2.0,
-            Wall::Bottom => ball.pos().y - self.size.0 / 2.0,
-            Wall::Left   => ball.pos().x - self.size.1 / 2.0,
-            Wall::Right  => ball.pos().x + self.size.1 / 2.0,
+            Wall::Top    => (ball.pos().y -  self.size.1 / 2.0).abs(),
+            Wall::Bottom => (ball.pos().y - -self.size.1 / 2.0).abs(),
+            Wall::Left   => (ball.pos().x - -self.size.0 / 2.0).abs(),
+            Wall::Right  => (ball.pos().x -  self.size.0 / 2.0).abs(),
         } - ball.rad;
         let wall_normal = wall.normal();
         let speed_towards_edge = ball.vel().component(wall_normal);
         let time_to_collision = distance / speed_towards_edge;
-        dbg!(ball.pos().x);
         dbg!(distance, wall_normal, speed_towards_edge, time_to_collision);
-        println!();
         // If a collision is to happen in zero time, it has already been handled.
         if !time_to_collision.is_finite() || time_to_collision < f32::EPSILON {
             return None;
@@ -145,7 +143,7 @@ impl System {
         Some(Collision::WallCollision(WallCollision {
             ball,
             time: time_to_collision,
-            wall: Wall::Left,
+            wall,
         }))
     }
 

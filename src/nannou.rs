@@ -19,11 +19,11 @@ fn model(app: &App) -> Model {
 
     let circles = vec![
         Ball::new((   0.0,    0.0), ( 0.0,   0.0)),
-        //Ball::new((  50.0,   50.0), ( 0.0, -10.0)),
+        Ball::new((  50.0,   50.0), ( 3.5, -10.0)),
         Ball::new((-100.0, -100.0), (20.0,  10.0)),
     ];
 
-    let system = System::new((400.0, 400.0), circles);
+    let system = System::new((400.1, 400.0 - PI), circles);
     
     Model {
         system,
@@ -31,7 +31,7 @@ fn model(app: &App) -> Model {
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    model.system.advance(1.0);
+    model.system.advance(1000.0);
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
@@ -39,11 +39,16 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.background().color(CORNFLOWERBLUE);
 
+    draw.rect()
+        .color(REBECCAPURPLE)
+        .w_h(model.system.size.0, model.system.size.1)
+        .x_y(0.0, 0.0);
+
     model.system.balls.iter().for_each(
         |ball| {
             draw.ellipse()
                 .color(STEELBLUE)
-                .w_h(10.0, 10.0)
+                .w_h(ball.rad * 2.0, ball.rad * 2.0)
                 .x_y(ball.pos().x, ball.pos().y);
         }
     );
