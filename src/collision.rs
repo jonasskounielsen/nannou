@@ -40,7 +40,7 @@ impl<'a> Collision<'a> {
         }
     }
 
-    pub fn soonest(self, other: Collision<'a>) -> Collision {
+    pub fn soonest(self, other: Collision<'a>) -> Collision<'a> {
         if self.time() < other.time() {
             self
         } else {
