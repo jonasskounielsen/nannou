@@ -1,4 +1,4 @@
-use crate::{ball::Ball, system::Wall};
+use crate::{ball::Ball, system::Wall, vec2::Vec2};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Collision<'a> {
@@ -8,14 +8,17 @@ pub enum Collision<'a> {
 
 #[derive(Clone, Copy, Debug)]
 pub struct BallCollision<'a> {
-    pub ball1: &'a Ball,
-    pub ball2: &'a Ball,
-    pub time: f32,
+    pub ball1:    &'a Ball,
+    pub ball2:    &'a Ball,
+    pub time:         f32,
+    pub plane_normal: Vec2,
 }
 
 impl<'a> BallCollision<'a> {
     pub fn handle(self) {
-
+        self.ball1.swap_speed(self.ball2, self.plane_normal);
+        self.ball1.collide(self.plane_normal);
+        self.ball2.collide(self.plane_normal);
     }
 }
 

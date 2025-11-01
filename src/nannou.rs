@@ -18,22 +18,20 @@ fn model(app: &App) -> Model {
         .unwrap();
 
     let circles = vec![
-        //Ball::new((   0.0,    0.0), ( 0.0,   0.0)),
-        //Ball::new((  50.0,   50.0), ( 3.5, -10.0)),
+        Ball::new((   0.0,    0.0), ( 0.0,   0.0)),
+        Ball::new((  50.0,   50.0), ( 3.5, -10.0)),
         Ball::new((-100.0, -100.0), (20.0,  10.0)),
     ];
 
-    let mut system = System::new((400.1, 400.0 - PI), circles);
+    let system = System::new((400.1, 400.0 - PI), circles);
 
-    system.advance(150.0);
-    
     Model {
         system,
     }
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    model.system.advance(10.0);
+    model.system.advance(100.0);
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {

@@ -18,6 +18,32 @@ impl Vec2 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 
+    pub fn scale(&self, new_mag: f32) -> Vec2 {
+        if self.mag() == 0.0 {
+            panic!("vector has no direction");
+        }
+        *self * (new_mag / self.mag())
+    }
+
+    pub fn scale_or(&self, new_mag: f32, fallback_direction: Vec2) -> Vec2 {
+        if self.mag() == 0.0 {
+            fallback_direction
+        } else {
+            *self
+        }.scale(new_mag)
+    }
+
+    pub fn norm(&self) -> Vec2 {
+        self.scale(1.0)
+    }
+
+    pub fn slope(&self) -> f32 {
+        if self.x == 0.0 {
+            panic!("slope is infinite");
+        }
+        self.y / self.x
+    }
+
     pub fn dist(&self, other: Vec2) -> f32 {
         (*self - other).mag()
     }
@@ -26,12 +52,16 @@ impl Vec2 {
         self.x * other.x + self.y * other.y
     }
 
-    pub fn component(&self, along: Vec2) -> f32 {
+    pub fn comp(&self, along: Vec2) -> f32 {
         self.dot(along) / along.mag()
     }
 
     pub fn reflect(&self, about: Vec2) -> Vec2 {
-        *self - about *(self.dot(about)) * 2.0
+        *self - about * (self.dot(about)) * 2.0
+    }
+
+    pub fn inv(&self) -> Vec2 {
+        *self * -1.0
     }
 }
 
@@ -42,6 +72,17 @@ impl std::ops::Mul<f32> for Vec2 {
         Vec2 {
             x: self.x * rhs,
             y: self.y * rhs,
+        }
+    }
+}
+
+impl std::ops::Div<f32> for Vec2 {
+    type Output = Vec2;
+    
+    fn div(self, rhs: f32) -> Self::Output {
+        Vec2 {
+            x: self.x / rhs,
+            y: self.y / rhs,
         }
     }
 }

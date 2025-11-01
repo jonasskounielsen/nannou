@@ -5,8 +5,8 @@ mod collision;
 mod vec2;
 
 fn main() {
-    debug();
-    //nannou::run();
+    //debug();
+    nannou::run();
 }
 
 use std::f32::consts::PI;
@@ -14,6 +14,7 @@ use std::f32::consts::PI;
 use ball::Ball;
 use system::System;
 
+#[allow(dead_code)]
 fn debug() {
     let circles = vec![
         Ball::new((   0.0,    0.0), ( 0.0,   0.0)),

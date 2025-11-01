@@ -18,10 +18,10 @@ pub enum Wall {
 impl Wall {
     pub fn normal(&self) -> Vec2 {
         match self {
-            Wall::Top    => Vec2::UP,
-            Wall::Bottom => Vec2::DOWN,
-            Wall::Left   => Vec2::LEFT,
-            Wall::Right  => Vec2::RIGHT,
+            Wall::Top    => Vec2::DOWN,
+            Wall::Bottom => Vec2::UP,
+            Wall::Left   => Vec2::RIGHT,
+            Wall::Right  => Vec2::LEFT,
         }
     }
 }
@@ -42,8 +42,8 @@ impl System {
                 break;
             }
 
-            dbg!(self.age, &collisions);
-            println!();
+            //dbg!(self.age, &collisions);
+            //println!();
             self.move_balls(most_urgent_time);
             remaining_time -= most_urgent_time;
 
@@ -82,36 +82,31 @@ impl System {
                     collision1.soonest(collision2)
                 }
             )
-            .unwrap()
+            .unwrap() // There is always a next collision.
     }
 
     fn next_collisions(&self) -> Vec<Collision<'_>> {
         self.balls
             .iter()
-            .map(|ball| {
-                self.next_collision(ball)
+            .enumerate()
+            .flat_map(|(index, ball)| {
+                let wall_collisions = self.wall_collisions(ball);
+                
+                let ball_collisions = self.ball_collisions(ball, index);
+
+                [wall_collisions, ball_collisions].concat()
             })
             .collect()
     }
-
-    fn next_collision<'a>(&'a self, ball: &'a Ball) -> Collision<'a> {
-        let ball_collisions = self.ball_collisions(ball);
-        
-        let wall_collisions = self.wall_collisions(ball);
-
-        ball_collisions
-            .into_iter()
-            .chain(wall_collisions)
-            .reduce(|collision1, collision2| {
-                collision1.soonest(collision2)
-            })
-            .unwrap() // There is always a next collision.
-    }
     
-    fn ball_collisions<'a>(&'a self, ball: &'a Ball) -> Vec<Collision<'a>> {
+    fn ball_collisions<'a>(&'a self, ball: &'a Ball, from_index: usize) -> Vec<Collision<'a>> {
         self.balls
             .iter()
-            .map(|other_ball| {
+            .enumerate()
+            .filter_map(|(i, other_ball)| {
+                if i <= from_index { // Also skip the ball at i == from_index since that is the one we are comparing against.
+                    return None;
+                }
                 self.ball_collision(ball, other_ball)
             })
             .collect()
@@ -133,8 +128,6 @@ impl System {
 
     // We know that the larger of the values we compare ball position to will always be the wall position.
     // We can therefore use an epsilon relative to that.
-    // This relies on speed_towards_edge not being very small,
-    // and making speed_towards_edge much larger than distance.
     const WALL_COLLISION_EPSILON: f32 = 3.0 * 200.0 * f32::EPSILON;
 
     fn get_wall_collision<'a>(&self, ball: &'a Ball, wall: Wall) -> Option<Collision<'a>> {
@@ -144,18 +137,17 @@ impl System {
             Wall::Left   => (ball.pos().x - -self.size.0 / 2.0).abs(),
             Wall::Right  => (ball.pos().x -  self.size.0 / 2.0).abs(),
         } - ball.rad;
-        let wall_normal = wall.normal();
-        let speed_towards_edge = ball.vel().component(wall_normal);
+        let speed_towards_edge = ball.vel().comp(wall.normal().inv());
         let time_to_collision = distance / speed_towards_edge;
         
-        //dbg!(distance, wall_normal, speed_towards_edge, time_to_collision);
-        
-        // If a collision is to happen in zero or close to zero time, it has already been handled.
-        // If it is to happen in negative time, discard it.
+        // If a wall is extremely close, the collision probably has already been handled.
+        // If a collision is to happen in negative time, discard it.
         if !time_to_collision.is_finite() ||
-            time_to_collision <= Self::WALL_COLLISION_EPSILON {
+            distance <= Self::WALL_COLLISION_EPSILON ||
+            time_to_collision < 0.0 {
             return None;
         }
+
         Some(Collision::WallCollision(WallCollision {
             ball,
             time: time_to_collision,
@@ -163,11 +155,46 @@ impl System {
         }))
     }
 
-    fn ball_collision<'a>(&self, ball1: &'a Ball, ball2: &'a Ball) -> Collision<'a> {
-        Collision::BallCollision(BallCollision {
+    const BALL_COLLISION_EPSILON: f32 = 0.0;
+
+    fn ball_collision<'a>(&self, ball1: &'a Ball, ball2: &'a Ball) -> Option<Collision<'a>> {
+        // https://www.geogebra.org/classic/dcwgqnr7
+        let total_radius       = ball1.rad + ball2.rad;
+        let relative_position = ball1.pos() - ball2.pos();
+        let relative_velocity = ball1.vel() - ball2.vel();
+        
+        let discriminant =
+            relative_position.dot(relative_velocity).powi(2) -
+            relative_velocity.dot(relative_velocity) *
+                (relative_position.dot(relative_position) - total_radius.powi(2));
+
+        if discriminant < 0.0 {
+            return None;
+        }
+
+        let intersection_point =
+            relative_position + relative_velocity *
+                (-relative_position.dot(relative_velocity) - discriminant.sqrt()) /
+                relative_velocity.dot(relative_velocity);
+        
+        let collision_plane_normal = intersection_point.norm();
+
+        let distance = intersection_point.dist(relative_position);
+        let time_to_collision = distance / relative_velocity.mag();
+        
+        // If a ball is extremely close, the collision probably has already been handled.
+        // If a collision is to happen in negative time, discard it.
+        if !time_to_collision.is_finite() ||
+            distance <= Self::BALL_COLLISION_EPSILON ||
+            time_to_collision < 0.0 {
+            return None;
+        }
+
+        Some(Collision::BallCollision(BallCollision {
             ball1,
             ball2,
-            time: 1000.0,
-        })
+            time: time_to_collision,
+            plane_normal: collision_plane_normal,
+        }))
     }
 }
