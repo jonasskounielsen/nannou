@@ -16,9 +16,23 @@ pub struct BallCollision<'a> {
 
 impl<'a> BallCollision<'a> {
     pub fn handle(self) {
-        self.ball1.swap_speed(self.ball2, self.plane_normal);
-        self.ball1.collide(self.plane_normal);
-        self.ball2.collide(self.plane_normal);
+        let parallel_component_1 = self.ball1.vel().proj(self.plane_normal);
+        let parallel_component_2 = self.ball2.vel().proj(self.plane_normal);
+        let new_parallel_component_1 = Self::new_speed(
+            self.ball1.mass, self.ball2.mass,
+            parallel_component_1, parallel_component_2,
+        );
+        let new_parallel_component_2 = Self::new_speed(
+            self.ball2.mass, self.ball1.mass,
+            parallel_component_2, parallel_component_1,
+        );
+        self.ball1.set_vel(self.ball1.vel() - parallel_component_1 + new_parallel_component_1);
+        self.ball2.set_vel(self.ball2.vel() - parallel_component_2 + new_parallel_component_2);
+    }
+
+    fn new_speed(mass: f32, other_mass: f32, vel_comp: Vec2, other_vel_comp: Vec2) -> Vec2 {
+        (mass * vel_comp + 2.0 * other_mass * other_vel_comp - other_mass * vel_comp) /
+            (mass + other_mass)
     }
 }
 
@@ -31,7 +45,8 @@ pub struct WallCollision<'a> {
 
 impl<'a> WallCollision<'a> {
     pub fn handle(self) {
-        self.ball.collide(self.wall.normal());
+        let parallel_component = self.ball.vel().proj(self.wall.normal());
+        self.ball.set_vel(self.ball.vel() - 2.0 * parallel_component);
     }
 }
 

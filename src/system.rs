@@ -31,6 +31,13 @@ impl System {
         Self { size, balls: circles, age: 0.0 }
     }
 
+    pub fn total_energy(&self) -> f32 {
+        self.balls.iter()
+            .fold(0.0, |acc, ball| {
+                acc + ball.mass * ball.vel().dot(ball.vel())
+            })
+    }
+
     pub fn advance(&mut self, time: f32) {
         let mut remaining_time = time;
         
@@ -42,15 +49,15 @@ impl System {
                 break;
             }
 
-            //dbg!(self.age, &collisions);
-            //println!();
+            //dbg!(self.age, &collisions, most_urgent_time);
+            //eprintln!();
             self.move_balls(most_urgent_time);
             remaining_time -= most_urgent_time;
 
             let most_urgent_collisions = collisions
                 .into_iter()
                 .filter(|collision| {
-                    collision.time() == most_urgent_time // Several collisions may occur simultaniously.
+                    collision.time() == most_urgent_time // Several collisions may occur simultaneously.
                 });
             
             most_urgent_collisions
@@ -82,7 +89,7 @@ impl System {
                     collision1.soonest(collision2)
                 }
             )
-            .unwrap() // There is always a next collision.
+            .expect("no next collision") // There is always a next collision.
     }
 
     fn next_collisions(&self) -> Vec<Collision<'_>> {

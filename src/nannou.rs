@@ -17,13 +17,13 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    let circles = vec![
-        Ball::new((   0.0,    0.0), ( 0.0,   0.0)),
-        Ball::new((  50.0,   50.0), ( 3.5, -10.0)),
-        Ball::new((-100.0, -100.0), (20.0,  10.0)),
-    ];
-
-    let system = System::new((400.1, 400.0 - PI), circles);
+    let mut circles = Vec::new();
+    for i in 1..=15 {
+        let ball = Ball::new((i as f32 * 10.0 - 200.0, 10.0), (i as f32 * 10.0, i as f32 * 5.0), 8.0 + (i as f32) / 10.0 * 8.0, 1.0 + (i as f32) / 10.0);
+        circles.push(ball);
+    }
+    
+    let system = System::new((400.0, 400.0), circles);
 
     Model {
         system,
@@ -31,7 +31,8 @@ fn model(app: &App) -> Model {
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    model.system.advance(100.0);
+    model.system.advance(0.01);
+    dbg!(model.system.total_energy());
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {

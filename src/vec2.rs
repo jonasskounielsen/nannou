@@ -56,12 +56,23 @@ impl Vec2 {
         self.dot(along) / along.mag()
     }
 
+    pub fn proj(&self, along: Vec2) -> Vec2 {
+        self.dot(along) / along.dot(along) * along
+    }
+
     pub fn reflect(&self, about: Vec2) -> Vec2 {
         *self - about * (self.dot(about)) * 2.0
     }
 
     pub fn inv(&self) -> Vec2 {
         *self * -1.0
+    }
+
+    pub fn perp(&self) -> Vec2 {
+        Vec2 {
+            x: -self.y,
+            y:  self.x,
+        }
     }
 }
 
@@ -73,6 +84,14 @@ impl std::ops::Mul<f32> for Vec2 {
             x: self.x * rhs,
             y: self.y * rhs,
         }
+    }
+}
+
+impl std::ops::Mul<Vec2> for f32 {
+    type Output = Vec2;
+    
+    fn mul(self, rhs: Vec2) -> Self::Output {
+        rhs * self
     }
 }
 

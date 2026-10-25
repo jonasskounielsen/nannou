@@ -5,7 +5,7 @@ mod collision;
 mod vec2;
 
 fn main() {
-    //debug();
+    // debug();
     nannou::run();
 }
 
@@ -16,26 +16,19 @@ use system::System;
 
 #[allow(dead_code)]
 fn debug() {
-    let circles = vec![
-        Ball::new((   0.0,    0.0), ( 0.0,   0.0)),
-        Ball::new((  50.0,   50.0), ( 3.5, -10.0)),
-        Ball::new((-100.0, -100.0), (20.0,  10.0)),
-    ];
+    let mut circles = Vec::new();
+    for i in 1..=2 {
+        let ball = Ball::new((i as f32 * 10.0, 10.0), (i as f32 * 10.0, 0.0), 8.0, 1.0);
+        circles.push(ball);
+    }
 
     let mut system = System::new((400.1, 400.0 - PI), circles);
 
-    //system.advance(340.0);
+    system.advance(0.0);
 
-    loop {
-        system.advance(10.0);
+    for i in 0..1000000 {
+        system.advance(1.0);
 
-        dbg!(&system);
-        println!();
-
-        let ball = &system.balls[0];
-
-        if ball.pos().x.abs() > 190.0 {
-            break;
-        }
+        dbg!(&system, i);
     }
 }
