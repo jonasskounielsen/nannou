@@ -1,4 +1,54 @@
+use std::fs::File;
+use std::io::Write;
+
 use crate::{ball::Ball, collision::{BallCollision, Collision, WallCollision}, vec2::Vec2};
+
+#[derive(Debug)]
+pub struct Record {
+    data: Vec<SystemState>,
+}
+
+impl Record {
+    pub fn as_csv(&self) -> String {
+        let mut csv = String::from("time");
+        let mut header = String::new();
+        for i in 0..self.data[0].balls.len() {
+            header += ", ball ";
+            header += &i.to_string();
+        }
+        csv += &header;
+        for state in &self.data {
+            let mut line = String::from("\n");
+            line += &state.time.to_string();
+            for ball in &state.balls {
+                line += ", ";
+                line += &ball.vel().mag().to_string();
+            }
+            csv += &line;
+        }
+        csv
+    }
+
+    pub fn save_to_file(&self, path: &str) {
+        let mut file = File::create(path).unwrap();
+        write!(file, "{}", self.as_csv()).unwrap();
+    }
+}
+
+#[derive(Debug)]
+struct SystemState {
+    time: f32,
+    balls: Vec<Ball>,
+}
+
+impl SystemState {
+    pub fn total_energy(&self) -> f32 {
+        self.balls.iter()
+            .fold(0.0, |acc, ball| {
+                acc + ball.mass * ball.vel().dot(ball.vel())
+            })
+    }
+}
 
 #[derive(Debug)]
 pub struct System {
@@ -27,15 +77,32 @@ impl Wall {
 }
 
 impl System {
-    pub fn new(size: (f32, f32), circles: Vec<Ball>) -> Self {
-        Self { size, balls: circles, age: 0.0 }
+    pub fn new(size: (f32, f32), balls: Vec<Ball>) -> Self {
+        Self { size, balls: balls, age: 0.0 }
     }
 
-    pub fn total_energy(&self) -> f32 {
-        self.balls.iter()
-            .fold(0.0, |acc, ball| {
-                acc + ball.mass * ball.vel().dot(ball.vel())
-            })
+    pub fn record(
+        step_size:       f32,
+        num_time_steps:  usize,
+        initial_delay:   f32,
+        initial_balls:   Vec<Ball>,
+        size:           (f32, f32),
+    ) -> Record {
+        let mut system = System::new(size, initial_balls);
+        let mut data = Vec::new();
+        system.advance(initial_delay);
+        for _ in 0..num_time_steps {
+            data.push(system.state());
+            system.advance(step_size);
+        }
+        Record { data }
+    }
+
+    fn state(&self) -> SystemState {
+        SystemState {
+            time: self.age,
+            balls: self.balls.clone(),
+        }
     }
 
     pub fn advance(&mut self, time: f32) {

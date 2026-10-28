@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::vec2::Vec2;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ball {
     pos: RefCell<Vec2>,
     vel: RefCell<Vec2>,
